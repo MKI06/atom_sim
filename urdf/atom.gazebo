@@ -1,0 +1,329 @@
+<?xml version="1.0"?>
+<robot>
+
+  <gazebo>
+
+    <plugin name="skid_steer_drive_controller" filename="libgazebo_ros_skid_steer_drive.so">
+      <updateRate>10.0</updateRate>
+      <robotNamespace></robotNamespace>
+      <leftFrontJoint>left_wheel_hinge_front</leftFrontJoint>
+      <rightFrontJoint>right_wheel_hinge_front</rightFrontJoint>
+      <leftRearJoint>left_wheel_hinge_back</leftRearJoint>
+      <rightRearJoint>right_wheel_hinge_back</rightRearJoint>
+      <wheelSeparation>0.4</wheelSeparation>
+      <wheelDiameter>0.2</wheelDiameter>
+      <robotBaseFrame>robot_footprint</robotBaseFrame>
+      <torque>10</torque>
+
+      <topicName>cmd_vel</topicName>
+      <odometryTopic>odom</odometryTopic>
+      <odometryFrame>odom</odometryFrame>
+
+      <commandTopic>cmd_vel</commandTopic>
+      <topic_name_twist>cmd_vel</topic_name_twist>
+      <topic_name_odometry>odom</topic_name_odometry>
+      <topic_name_joint>joint</topic_name_joint>
+
+      <broadcastTF>true</broadcastTF>
+
+      <covariance_x>0.0001</covariance_x>
+      <covariance_y>0.0001</covariance_y>
+      <covariance_yaw>0.01</covariance_yaw>
+
+    </plugin>
+
+  </gazebo>
+
+
+<!-- rpy="0 0.415911961 0"/>  -->
+<joint name="zed2_tilt_head_joint" type="fixed">
+      <origin xyz="0.048 0 0.141" rpy="0 0 0"/> <!-- 23.83 degree tilt -->
+      <parent link="chassis"/>
+      <child link="zed2_tilt_head_link"/>
+    </joint>
+
+    <link name="zed2_tilt_head_link">
+      <inertial>
+        <mass value="0.108614"/>
+        <origin xyz="0 -0.008564 0.015313"/>
+        <inertia
+          ixx="7.371e-5" ixy="0.0" ixz="1.326071e-6"
+          iyy="3.14e-5" iyz="-1.424e-5"
+          izz="6.13e-5"/>
+      </inertial>
+      <visual>
+        <origin xyz="0 0 0" rpy="0 0 3.14"/>
+        <geometry>
+          <mesh filename="package://atom/models/Manfrotto_head.dae"/>
+        </geometry>
+      </visual>
+      <collision>
+        <origin xyz="0 0 0" rpy="0 0 3.14"/>
+        <geometry>
+          <mesh filename="package://atom/models/Manfrotto_head.dae"/>
+        </geometry>
+      </collision>
+    </link>
+
+    <joint name="zed2_camera_center_joint" type="fixed">
+      <parent link="zed2_tilt_head_link"/>
+      <child link="zed2_camera_center"/>
+      <origin xyz="0 0 0.0486" rpy="0 0 0"/>
+    </joint>
+
+    <!-- Camera Center -->
+    <link name="zed2_camera_center">
+      <inertial>
+        <mass value="0.16140"/>
+        <origin xyz="0 0 0"/>
+        <inertia
+          ixx="0.0003947" ixy="0.0" ixz="3.3365e-8"
+          iyy="2.417e-5" iyz="0.0"
+          izz="0.0003973"/>
+      </inertial>
+      <visual>
+        <geometry>
+          <mesh filename="package://atom/models/ZED2.dae"/>
+        </geometry>
+      </visual>
+      <collision>
+        <geometry>
+          <mesh filename="package://atom/models/ZED2.dae"/>
+        </geometry>
+      </collision>
+    </link>
+
+    <!-- Left Camera -->
+    <joint name="zed2_left_camera_joint" type="fixed">
+      <parent link="zed2_camera_center"/>
+      <child link="zed2_left_camera_frame"/>
+      <origin xyz="0 0.6 0" rpy="0 0 0" />
+    </joint>
+
+    <link name="zed2_left_camera_frame" />
+
+    <joint name="zed2_left_camera_optical_joint" type="fixed">
+      <origin xyz="0 0 0" rpy="-1.5707963268 0.0 -${pi/2}"/>
+      <parent link="zed2_left_camera_frame"/>
+      <child link="zed2_left_camera_optical_frame"/>
+    </joint>
+
+    <link name="zed2_left_camera_optical_frame"/>
+
+    <!-- Right Camera -->
+    <joint name="zed2_right_camera_joint" type="fixed">
+      <parent link="zed2_camera_center"/>
+      <child link="zed2_right_camera_frame"/>
+      <origin xyz="0 -0.6 0" rpy="0 0 0" />
+    </joint>
+
+    <link name="zed2_right_camera_frame" />
+
+    <joint name="zed2_right_camera_optical_joint" type="fixed">
+      <origin xyz="0 0 0" rpy="-1.5707963268 0.0 -${pi/2}"/>
+      <parent link="zed2_right_camera_frame"/>
+      <child link="zed2_right_camera_optical_frame"/>
+    </joint>
+
+    <link name="zed2_right_camera_optical_frame"/>
+
+
+
+    <!-- Left/Depth camera -->
+    <gazebo reference="zed2_left_camera_frame">
+      <!-- Raw images (with lens distortion) -->
+      <sensor type="camera" name="zed2_left_raw_camera">
+        <always_on>true</always_on>
+        <update_rate>15.0</update_rate>
+        <visualize>false</visualize>
+        <camera name="zed2_left_raw">
+          <horizontal_fov>1.7633</horizontal_fov>
+          <image>
+            <width>1280</width>
+            <height>720</height>
+            <format>R8G8B8</format>
+          </image>
+          <clip>
+            <near>0.02</near>
+            <far>300</far>
+          </clip>
+          <noise>
+            <type>gaussian</type>
+            <mean>0.0</mean>
+            <stddev>0.007</stddev>
+          </noise>
+          <distortion>
+            <!-- Values copied from an actual ZED2 camera -->
+            <k1>-0.043693598</k1>
+            <k2>0.0146164996</k2>
+            <p1>-0.006573319</p1>
+            <p2>-0.000216900</p2>
+            <k3>0.000084328</k3>
+            <center>0.5 0.5</center>
+          </distortion>
+        </camera>
+        <plugin name="camera_controller" filename="libgazebo_ros_camera.so">
+          <robotNamespace>atom</robotNamespace>
+          <cameraName>zed2/left_raw</cameraName>
+          <imageTopicName>image_raw_color</imageTopicName>
+          <cameraInfoTopicName>camera_info</cameraInfoTopicName>
+          <frameName>zed2_left_camera_optical_frame</frameName>
+          <distortionK1>-0.043693598</distortionK1>
+          <distortionK2>0.0146164996</distortionK2>
+          <distortionT1>-0.006573319</distortionT1>
+          <distortionT2>-0.000216900</distortionT2>
+          <distortionK3>0.000084328</distortionK3>
+          <CxPrime>648.5</CxPrime>
+          <Cx>648.5</Cx>
+          <Cy>366.8340148925781</Cy>
+          <hack0.12>0.0</hack0.12>
+        </plugin>
+      </sensor>
+
+      <sensor type="depth" name="zed2_left_camera">
+        <!-- Rectified images, Depth images, Point Clouds -->
+        <always_on>true</always_on>
+        <update_rate>15.0</update_rate>
+        <visualize>false</visualize>
+        <camera name="zed2_left">
+          <horizontal_fov>1.7633</horizontal_fov>
+          <image>
+            <width>1280</width>
+            <height>720</height>
+            <format>R8G8B8</format>
+          </image>
+          <clip>
+            <near>0.02</near>
+            <far>300</far>
+          </clip>
+          <noise>
+            <type>gaussian</type>
+            <mean>0.0</mean>
+            <stddev>0.007</stddev>
+          </noise>
+        </camera>
+        <plugin name="camera_controller" filename="libgazebo_ros_openni_kinect.so">
+          <robotNamespace>atom</robotNamespace>
+          <cameraName>zed2</cameraName>
+          <imageTopicName>left/image_rect_color</imageTopicName>
+          <cameraInfoTopicName>left/camera_info</cameraInfoTopicName>
+          <depthImageTopicName>depth/depth_registered</depthImageTopicName>
+          <depthImageInfoTopicName>depth/camera_info</depthImageInfoTopicName>
+          <pointCloudTopicName>point_cloud/cloud_registered</pointCloudTopicName>
+          <pointCloudCutoff>0.3</pointCloudCutoff>
+          <pointCloudCutoffMax>20.0</pointCloudCutoffMax>
+          <frameName>zed2_left_camera_optical_frame</frameName>
+          <baseline>0.12</baseline>
+          <CxPrime>658.8206787109375</CxPrime>
+          <Cx>658.8206787109375</Cx>
+          <Cy>372.25787353515625</Cy>
+          <hack0.12>0.0</hack0.12>
+        </plugin>
+      </sensor>
+    </gazebo>
+
+    <!-- Right camera -->
+    <gazebo reference="zed2_right_camera_frame">
+      <!-- Raw images (with lens distortion) -->
+      <sensor type="camera" name="zed2_right_raw_camera">
+        <always_on>true</always_on>
+        <update_rate>15.0</update_rate>
+        <visualize>false</visualize>
+        <camera name="zed2_right_raw">
+          <horizontal_fov>1.7633</horizontal_fov>
+          <image>
+            <width>1280</width>
+            <height>720</height>
+            <format>R8G8B8</format>
+          </image>
+          <clip>
+            <near>0.02</near>
+            <far>300</far>
+          </clip>
+          <noise>
+            <type>gaussian</type>
+            <mean>0.0</mean>
+            <stddev>0.007</stddev>
+          </noise>
+          <distortion>
+            <k1>-0.040993299</k1>
+            <k2>0.009593590</k2>
+            <p1>-0.004429849</p1>
+            <p2>0.000192024</p2>
+            <k3>-0.000320880</k3>
+            <center>0.5 0.5</center>
+          </distortion>
+        </camera>
+        <plugin name="camera_controller" filename="libgazebo_ros_camera.so">
+          <robotNamespace>atom</robotNamespace>
+          <cameraName>zed2/right_raw</cameraName>
+          <imageTopicName>image_raw_color</imageTopicName>
+          <cameraInfoTopicName>camera_info</cameraInfoTopicName>
+          <frameName>zed2_right_camera_optical_frame</frameName>
+          <distortionK1>-0.040993299</distortionK1>
+          <distortionK2>0.009593590</distortionK2>
+          <distortionT1>-0.004429849</distortionT1>
+          <distortionT2>0.000192024</distortionT2>
+          <distortionK3>-0.000320880</distortionK3>
+          <CxPrime>659.3049926757812</CxPrime>
+          <Cx>659.3049926757812</Cx>
+          <Cy>371.39849853515625</Cy>
+          <hack0.12>0.12</hack0.12>
+        </plugin>
+      </sensor>
+
+      <sensor type="camera" name="zed2_right_camera">
+        <!-- Rectified images -->
+        <always_on>true</always_on>
+        <update_rate>15.0</update_rate>
+        <visualize>false</visualize>
+        <camera name="zed2_right">
+          <horizontal_fov>1.7633</horizontal_fov>
+          <image>
+            <width>1280</width>
+            <height>720</height>
+            <format>R8G8B8</format>
+          </image>
+          <clip>
+            <near>0.02</near>
+            <far>300</far>
+          </clip>
+          <noise>
+            <type>gaussian</type>
+            <mean>0.0</mean>
+            <stddev>0.007</stddev>
+          </noise>
+        </camera>
+        <plugin name="camera_controller" filename="libgazebo_ros_camera.so">
+          <robotNamespace>atom</robotNamespace>
+          <cameraName>zed2/right</cameraName>
+          <imageTopicName>image_rect_color</imageTopicName>
+          <cameraInfoTopicName>camera_info</cameraInfoTopicName>
+          <frameName>zed2_right_camera_optical_frame</frameName>
+          <CxPrime>658.8206787109375</CxPrime>
+          <Cx>658.8206787109375</Cx>
+          <Cy>372.25787353515625</Cy>
+          <hack0.12>0.12</hack0.12>
+        </plugin>
+      </sensor>
+    </gazebo>
+
+    <!-- IMU -->
+    <gazebo reference="zed2_left_camera_frame">
+      <sensor type="imu" name="zed2_imu_sensor">
+        <update_rate>100</update_rate>
+        <plugin filename="libgazebo_ros_imu_sensor.so" name="imu_plugin">
+          <robotNamespace>atom</robotNamespace>
+          <topicName>zed2/imu/data</topicName>
+          <frameName>zed2_imu_link</frameName>
+          <updateRateHZ>100.0</updateRateHZ>
+          <gaussianNoise>0.01</gaussianNoise>
+          <initialOrientationAsReference>false</initialOrientationAsReference>
+          <!-- IMU frame offset copied from an actual ZED2 camera -->
+          <xyzOffset>-0.002 -0.023 -0.002</xyzOffset>
+          <rpyOffset>0.0014025 -0.0000012 -0.0016915</rpyOffset>
+        </plugin>
+      </sensor>
+    </gazebo>
+
+</robot>
